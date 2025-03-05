@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香港天氣預報</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #0066cc;
+        }
+        .section {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .icon {
+            width: 50px;
+            height: 50px;
+            vertical-align: middle;
+        }
+        .weather-info {
+            margin-top: 10px;
+        }
+        .weather-info p {
+            margin: 5px 0;
+        }
+        .refresh-time {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .forecast-day {
+            text-align: center;
+        }
+        .forecast-day img {
+            width: 50px;
+            height: 50px;
+        }
+        .hidden {
+            display: none;
+        }
+        .forecast-day div {
+            margin-bottom: 5px;
+        }
+        .warning-icon {
+            width: 30px;
+            height: 30px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        .title-icon {
+            width: 40px;
+            height: 40px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        /* Grid Layout for 本港地區天氣預報 and 本港地區天氣報告 */
+        .weather-grid {
+    display: grid;
+    grid-template-columns: 70% 30%; /* 70% for 本港地區天氣預報, 30% for 本港地區天氣報告 */
+    gap: 20px;
+}
+@media (max-width: 768px) {
+    .weather-grid {
+        grid-template-columns: 1fr; /* Stack on smaller screens */
+    }
+}
+
+        /* Toggle Button for 詳細天氣警告資訊 */
+        .toggle-button {
+            background-color: #0066cc;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .toggle-button:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 標題與警告圖標 -->
+    <h1>香港天氣預報 <img id="titleIcon" src="" alt="" class="title-icon hidden"></h1>
+
+    <!-- 特別天氣提示 -->
+    <div class="section" id="swtSection">
+        <h2>特別天氣提示</h2>
+        <p id="swt">載入中...</p>
+    </div>
+
+    <!-- Grid Layout for 本港地區天氣預報 and 本港地區天氣報告 -->
+    <div class="weather-grid">
+        <!-- 本港地區天氣預報 -->
+<div class="section">
+    <h2>本港地區天氣預報</h2>
+    <div class="weather-info" id="flw">
+        <p><span id="generalSituation">載入中...</span></p>
+        <p id="tcInfoSection"><span id="tcInfo">載入中...</span></p>
+        <p id="fireDangerWarningSection"><span id="fireDangerWarning">載入中...</span></p>
+        <p><span id="forecastPeriod">載入中...</span></p>
+        <p><span id="forecastDesc">載入中...</span></p>
+        <p><span id="outlook">載入中...</span></p>
+        <p><strong>更新時間：</strong> <span id="updateTime">載入中...</span></p>
+        <p class="refresh-time"><span id="refreshTime">載入中...</span></p>
+    </div>
+</div>
+
+        <!-- 本港地區天氣報告 -->
+        <div class="section">
+            <h2>本港地區天氣報告</h2>
+            <p id="rhrread">載入中...</p>
+        </div>
+    </div>
+
+    <!-- Toggle Button for 詳細天氣警告資訊 -->
+<button class="toggle-button hidden" id="toggleWarningButton" onclick="toggleWarningInfo()">顯示詳細天氣警告資訊</button>
+
+    <!-- 詳細天氣警告資訊 (Hidden by Default) -->
+    <div class="section hidden" id="warningInfoSection">
+        <h2>詳細天氣警告資訊</h2>
+        <p id="warningInfo">載入中...</p>
+    </div>
+
+    <!-- 天氣警告一覽 -->
+    <div class="section" id="warnsumSection">
+        <h2>天氣警告一覽</h2>
+        <p id="warnsum">載入中...</p>
+    </div>
+
+    <!-- 九天天氣預報 -->
+    <div class="section">
+        <h2>九天天氣預報</h2>
+        <p><strong>天氣概況：</strong> <span id="fndGeneralSituation">載入中...</span></p>
+		<p><strong>更新時間：</strong> <span id="fndUpdateTime">載入中...</span></p>
+        <div class="forecast-grid" id="fnd">載入中...</div>
+    </div>
+
+    <script>
+        // 天氣圖標的基礎URL
+        const iconBaseUrl = "https://www.hko.gov.hk/images/HKOWxIconOutline/pic";
+
+        // 警告圖標的映射
+        const warningIcons = {
+            "WHOT": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/vhot.gif",
+            "WCOLD": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/cold.gif",
+            "WMSGNL": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/sms.gif",
+            "WTMW": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tsunami-warn.gif",
+            "WTS": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/ts.gif",
+            "WL": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/landslip.gif",
+            "WFNTSA": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/ntfl.gif",
+            "WFROST": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/frost.gif",
+            "WFIREY": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/firey.gif",
+            "WFIRER": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/firer.gif",
+            "WRAINA": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/raina.gif",
+            "WRAINR": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/rainr.gif",
+            "WRAINB": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/rainb.gif",
+            "TC1": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc1.gif",
+            "TC3": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc3.gif",
+            "TC8NE": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc8ne.gif",
+            "TC8SE": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc8b.gif",
+            "TC8SW": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc8c.gif",
+            "TC8NW": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc8d.gif",
+            "TC9": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc9.gif",
+            "TC10": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc10.gif"
+        };
+
+        // 將日期格式從 YYYYMMDD 轉換為 2月2日（一）
+        function formatDate(dateStr) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const date = new Date(`${year}-${month}-${day}`);
+            const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+            const weekday = weekdays[date.getDay()];
+            return `${parseInt(month)}月${parseInt(day)}日（${weekday}）`;
+        }
+
+        // 獲取當前時間並格式化為 HH:MM:SS
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // 獲取API數據
+        async function fetchWeatherData() {
+            try {
+                // 更新刷新時間
+                document.getElementById('refreshTime').innerText = getCurrentTime();
+
+                // 特別天氣提示 (swt)
+                const swtResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=swt&lang=tc');
+                const swtData = await swtResponse.json();
+                if (swtData.swt && swtData.swt.length > 0 && swtData.swt[0].desc) {
+                    document.getElementById('swt').innerText = swtData.swt[0].desc;
+                    document.getElementById('swtSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('swt').innerText = "無數據";
+                    document.getElementById('swtSection').classList.add('hidden');
+                }
+
+                // 本港地區天氣預報 (flw)
+                const flwResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
+                const flwData = await flwResponse.json();
+                document.getElementById('generalSituation').innerText = flwData.generalSituation || "無數據";
+                document.getElementById('tcInfo').innerText = flwData.tcInfo || "無數據";
+                document.getElementById('fireDangerWarning').innerText = flwData.fireDangerWarning || "無數據";
+                document.getElementById('forecastPeriod').innerText = flwData.forecastPeriod || "無數據";
+                document.getElementById('forecastDesc').innerText = flwData.forecastDesc || "無數據";
+                document.getElementById('outlook').innerText = flwData.outlook || "無數據";
+                document.getElementById('updateTime').innerText = flwData.updateTime || "無數據";
+				const flwUpdateTime = flwData.updateTime ? flwData.updateTime.replace("T", " ").substring(0, 16) : "無數據";
+document.getElementById('updateTime').innerText = flwUpdateTime;
+
+                // 隱藏無數據的字段
+                if (document.getElementById('tcInfo').innerText === "無數據") {
+                    document.getElementById('tcInfoSection').classList.add('hidden');
+                } else {
+                    document.getElementById('tcInfoSection').classList.remove('hidden');
+                }
+                if (document.getElementById('fireDangerWarning').innerText === "無數據") {
+                    document.getElementById('fireDangerWarningSection').classList.add('hidden');
+                } else {
+                    document.getElementById('fireDangerWarningSection').classList.remove('hidden');
+                }
+
+                // 本港地區天氣報告 (rhrread)
+                const rhrreadResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
+                const rhrreadData = await rhrreadResponse.json();
+                if (rhrreadData.temperature && rhrreadData.temperature.data.length > 0) {
+                    // 直接使用索引 12 獲取「青衣」的溫度數據
+                    const tsingYiTemp = rhrreadData.temperature.data[12];
+                    // 直接使用索引 0 獲取濕度數據
+                    const humidity = rhrreadData.humidity.data[0];
+
+                    if (tsingYiTemp && humidity) {
+                        document.getElementById('rhrread').innerHTML = `
+                            地點: ${tsingYiTemp.place}<br>
+                            溫度: ${tsingYiTemp.value}°C<br>
+                            濕度: ${humidity.value}%
+                        `;
+                    } else {
+                        document.getElementById('rhrread').innerText = "無數據";
+                    }
+                } else {
+                    document.getElementById('rhrread').innerText = "無數據";
+                }
+
+                // 天氣警告一覽 (warnsum)
+                const warnsumResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
+                const warnsumData = await warnsumResponse.json();
+                const warnsumCode = Object.keys(warnsumData)[0]; // Get the first warning code
+const warnsumText = warnsumData[warnsumCode]?.name || "無數據";
+const warnsumIcon = warningIcons[warnsumData[warnsumCode]?.code] || ""; // Use the "code" field
+const warnsumActionCode = warnsumData[warnsumCode]?.actionCode || "";
+
+// If actionCode is CANCEL, hide the warning
+if (warnsumActionCode === "CANCEL") {
+    document.getElementById('warnsum').innerText = "無數據";
+    document.getElementById('warnsumSection').classList.add('hidden');
+    document.getElementById('titleIcon').classList.add('hidden');
+} else if (warnsumText !== "無數據" && warnsumIcon) {
+    document.getElementById('warnsum').innerHTML = `
+        <img src="${warnsumIcon}" alt="${warnsumCode}" class="warning-icon">
+        ${warnsumText} (${warnsumData[warnsumCode]?.type || ""})
+    `;
+    document.getElementById('warnsumSection').classList.remove('hidden');
+
+    // Show the warning icon in the title
+    document.getElementById('titleIcon').src = warnsumIcon;
+    document.getElementById('titleIcon').classList.remove('hidden');
+} else {
+    document.getElementById('warnsum').innerText = "無數據";
+    document.getElementById('warnsumSection').classList.add('hidden');
+    document.getElementById('titleIcon').classList.add('hidden');
+}
+
+                // 九天天氣預報 (fnd)
+                const fndResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
+                const fndData = await fndResponse.json();
+                if (fndData.weatherForecast) {
+                    let forecastHTML = "";
+                    fndData.weatherForecast.forEach(day => {
+                        const formattedDate = formatDate(day.forecastDate);
+                        const temperatureRange = `${day.forecastMintemp.value}°C-${day.forecastMaxtemp.value}°C`;
+                        forecastHTML += `
+                            <div class="forecast-day">
+                                <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
+                                <div>
+                                    <strong>${formattedDate}</strong><br>
+                                    ${day.forecastWeather || "無數據"}<br>
+                                    ${temperatureRange}<br>
+                                    ${day.forecastWind || "無數據"}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('fnd').innerHTML = forecastHTML;
+                } else {
+                    document.getElementById('fnd').innerText = "無數據";
+                }
+				const updateTime = fndData.updateTime ? fndData.updateTime.replace("T", " ").substring(0, 16) : "無數據";
+				document.getElementById('fndUpdateTime').innerText = updateTime;
+
+                // 顯示「天氣概況」
+                document.getElementById('fndGeneralSituation').innerText = fndData.generalSituation || "無數據";
+
+                // 詳細天氣警告資訊 (warningInfo)
+                const warningInfoResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc');
+                const warningInfoData = await warningInfoResponse.json();
+                const warningInfoActionCode = warningInfoData.details?.[0]?.actionCode || "";
+
+                // 如果 actionCode 是 CANCEL，隱藏詳細天氣警告資訊
+
+if (warningInfoActionCode === "CANCEL" || !warningInfoData.details || warningInfoData.details.length === 0) {
+    document.getElementById('warningInfo').innerText = "無數據";
+    document.getElementById('warningInfoSection').classList.add('hidden');
+    document.getElementById('toggleWarningButton').classList.add('hidden'); // Hide the button
+} else {
+    const details = warningInfoData.details[0].contents.join("<br>");
+    document.getElementById('warningInfo').innerHTML = details;
+    document.getElementById('warningInfoSection').classList.remove('hidden');
+    document.getElementById('toggleWarningButton').classList.remove('hidden'); // Show the button
+}
+            } catch (error) {
+                console.error('獲取天氣數據時出錯:', error);
+                document.getElementById('generalSituation').innerText = "數據加載失敗";
+                document.getElementById('tcInfo').innerText = "數據加載失敗";
+                document.getElementById('fireDangerWarning').innerText = "數據加載失敗";
+                document.getElementById('forecastPeriod').innerText = "數據加載失敗";
+                document.getElementById('forecastDesc').innerText = "數據加載失敗";
+                document.getElementById('outlook').innerText = "數據加載失敗";
+                document.getElementById('updateTime').innerText = "數據加載失敗";
+                document.getElementById('rhrread').innerText = "數據加載失敗";
+                document.getElementById('fnd').innerText = "數據加載失敗";
+                document.getElementById('warnsum').innerText = "數據加載失敗";
+                document.getElementById('warningInfo').innerText = "數據加載失敗";
+                document.getElementById('swt').innerText = "數據加載失敗";
+            }
+        }
+
+        // 每分鐘更新數據
+        fetchWeatherData(); // 立即加載
+        setInterval(fetchWeatherData, 60000); // 每分鐘更新一次
+
+        // 切換 詳細天氣警告資訊 的顯示狀態
+        function toggleWarningInfo() {
+            const warningInfoSection = document.getElementById('warningInfoSection');
+            warningInfoSection.classList.toggle('hidden');
+        }
+    </script>
+
+</body>
+</html>
