@@ -269,6 +269,39 @@
             }
         }
 
+        // 更新九天天氣預報
+        function updateFnd(fndData) {
+            const fndContainer = document.getElementById('fnd');
+            const fndGeneralSituation = document.getElementById('fndGeneralSituation');
+            const fndUpdateTime = document.getElementById('fndUpdateTime');
+
+            if (fndData.weatherForecast) {
+                let forecastHTML = "";
+                fndData.weatherForecast.forEach(day => {
+                    const formattedDate = formatDate(day.forecastDate);
+                    const temperatureRange = `${day.forecastMintemp.value}°C-${day.forecastMaxtemp.value}°C`;
+                    forecastHTML += `
+                        <div class="forecast-day">
+                            <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
+                            <div>
+                                <strong>${formattedDate}</strong><br>
+                                ${day.forecastWeather || "無數據"}<br>
+                                ${temperatureRange}<br>
+                                ${day.forecastWind || "無數據"}
+                            </div>
+                        </div>
+                    `;
+                });
+                fndContainer.innerHTML = forecastHTML;
+                fndGeneralSituation.innerText = fndData.generalSituation || "無數據";
+                fndUpdateTime.innerText = fndData.updateTime ? fndData.updateTime.replace("T", " ").substring(0, 16) : "無數據";
+            } else {
+                fndContainer.innerText = "無數據";
+                fndGeneralSituation.innerText = "無數據";
+                fndUpdateTime.innerText = "無數據";
+            }
+        }
+
         // 獲取API數據
         async function fetchWeatherData() {
             try {
@@ -329,27 +362,7 @@
                 // 九天天氣預報 (fnd)
                 const fndResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
                 const fndData = await fndResponse.json();
-                if (fndData.weatherForecast) {
-                    let forecastHTML = "";
-                    fndData.weatherForecast.forEach(day => {
-                        const formattedDate = formatDate(day.forecastDate);
-                        const temperatureRange = `${day.forecastMintemp.value}°C-${day.forecastMaxtemp.value}°C`;
-                        forecastHTML += `
-                            <div class="forecast-day">
-                                <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
-                                <div>
-                                    <strong>${formattedDate}</strong><br>
-                                    ${day.forecastWeather || "無數據"}<br>
-                                    ${temperatureRange}<br>
-                                    ${day.forecastWind || "無數據"}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('fnd').innerHTML = forecastHTML;
-                } else {
-                    document.getElementById('fnd').innerText = "無數據";
-                }
+                updateFnd(fndData); // Update 9-day forecast
             } catch (error) {
                 console.error('獲取天氣數據時出錯:', error);
                 document.getElementById('generalSituation').innerText = "數據加載失敗";
