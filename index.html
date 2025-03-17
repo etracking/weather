@@ -119,8 +119,8 @@
             <h2>本港地區天氣預報</h2>
             <div class="weather-info" id="flw">
                 <p><span id="generalSituation">載入中...</span></p>
-                <p id="tcInfoSection"><span id="tcInfo">載入中...</span></p>
-                <p id="fireDangerWarningSection"><span id="fireDangerWarning">載入中...</span></p>
+                <p id="tcInfoSection"><span id="tcInfo"></span></p>
+                <p id="fireDangerWarningSection"><span id="fireDangerWarning"></span></p>
                 <p><span id="forecastPeriod">載入中...</span></p>
                 <p><span id="forecastDesc">載入中...</span></p>
                 <p><span id="outlook">載入中...</span></p>
@@ -323,12 +323,25 @@
                 const flwResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
                 const flwData = await flwResponse.json();
                 document.getElementById('generalSituation').innerText = flwData.generalSituation || "無數據";
-                document.getElementById('tcInfo').innerText = flwData.tcInfo || "無數據";
-                document.getElementById('fireDangerWarning').innerText = flwData.fireDangerWarning || "無數據";
                 document.getElementById('forecastPeriod').innerText = flwData.forecastPeriod || "無數據";
                 document.getElementById('forecastDesc').innerText = flwData.forecastDesc || "無數據";
                 document.getElementById('outlook').innerText = flwData.outlook || "無數據";
                 document.getElementById('updateTime').innerText = flwData.updateTime || "無數據";
+
+                // Hide tcInfo and fireDangerWarning if empty
+                if (flwData.tcInfo) {
+                    document.getElementById('tcInfo').innerText = flwData.tcInfo;
+                    document.getElementById('tcInfoSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('tcInfoSection').classList.add('hidden');
+                }
+
+                if (flwData.fireDangerWarning) {
+                    document.getElementById('fireDangerWarning').innerText = flwData.fireDangerWarning;
+                    document.getElementById('fireDangerWarningSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('fireDangerWarningSection').classList.add('hidden');
+                }
 
                 // 本港地區天氣報告 (rhrread)
                 const rhrreadResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
