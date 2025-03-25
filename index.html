@@ -73,8 +73,14 @@
             gap: 10px;
             margin-bottom: 10px;
         }
-
-        /* Grid Layout for 本港地區天氣預報 and 本港地區天氣報告 */
+        .sun-moon-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .sun-moon-info p {
+            margin: 5px 0;
+        }
         .weather-grid {
             display: grid;
             grid-template-columns: 70% 30%;
@@ -85,8 +91,6 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        /* Toggle Button for 詳細天氣警告資訊 */
         .toggle-button {
             background-color: #0066cc;
             color: white;
@@ -102,19 +106,14 @@
     </style>
 </head>
 <body>
-
-    <!-- 標題與警告圖標 -->
     <h1>香港天氣預報 <span id="titleIcons"></span></h1>
 
-    <!-- 特別天氣提示 -->
     <div class="section" id="swtSection">
         <h2>特別天氣提示</h2>
         <p id="swt">載入中...</p>
     </div>
 
-    <!-- Grid Layout for 本港地區天氣預報 and 本港地區天氣報告 -->
     <div class="weather-grid">
-        <!-- 本港地區天氣預報 -->
         <div class="section">
             <h2>本港地區天氣預報</h2>
             <div class="weather-info" id="flw">
@@ -129,29 +128,28 @@
             </div>
         </div>
 
-        <!-- 本港地區天氣報告 -->
         <div class="section">
             <h2>本港地區天氣報告</h2>
             <p id="rhrread">載入中...</p>
+            <div class="sun-moon-info" id="sunMoonInfo">
+                <p id="sunInfo">載入中...</p>
+                <p id="moonInfo">載入中...</p>
+            </div>
         </div>
     </div>
 
-    <!-- Toggle Button for 詳細天氣警告資訊 -->
     <button class="toggle-button hidden" id="toggleWarningButton" onclick="toggleWarningInfo()">顯示詳細天氣警告資訊</button>
 
-    <!-- 詳細天氣警告資訊 (Hidden by Default) -->
     <div class="section hidden" id="warningInfoSection">
         <h2>詳細天氣警告資訊</h2>
         <div id="warningInfo">載入中...</div>
     </div>
 
-    <!-- 天氣警告一覽 -->
     <div class="section" id="warnsumSection">
         <h2>天氣警告一覽</h2>
         <div id="warnsum">載入中...</div>
     </div>
 
-    <!-- 九天天氣預報 -->
     <div class="section">
         <h2>九天天氣預報</h2>
         <p><strong>天氣概況：</strong> <span id="fndGeneralSituation">載入中...</span></p>
@@ -160,10 +158,8 @@
     </div>
 
     <script>
-        // 天氣圖標的基礎URL
         const iconBaseUrl = "https://www.hko.gov.hk/images/HKOWxIconOutline/pic";
 
-        // 警告圖標的映射
         const warningIcons = {
             "WHOT": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/vhot.gif",
             "WCOLD": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/cold.gif",
@@ -188,7 +184,6 @@
             "TC10": "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/tc10.gif"
         };
 
-        // 將日期格式從 YYYYMMDD 轉換為 2月2日（一）
         function formatDate(dateStr) {
             const year = dateStr.substring(0, 4);
             const month = dateStr.substring(4, 6);
@@ -199,7 +194,6 @@
             return `${parseInt(month)}月${parseInt(day)}日（${weekday}）`;
         }
 
-        // 獲取當前時間並格式化為 HH:MM:SS
         function getCurrentTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -208,20 +202,17 @@
             return `${hours}:${minutes}:${seconds}`;
         }
 
-        // 更新天氣警告一覽
         function updateWarnings(warnsumData) {
             const warnsumContainer = document.getElementById('warnsum');
             const titleIconsContainer = document.getElementById('titleIcons');
-            warnsumContainer.innerHTML = ""; // Clear previous content
-            titleIconsContainer.innerHTML = ""; // Clear previous icons
+            warnsumContainer.innerHTML = "";
+            titleIconsContainer.innerHTML = "";
 
             let hasActiveWarnings = false;
 
             for (const [key, warning] of Object.entries(warnsumData)) {
                 if (warning.actionCode !== "CANCEL") {
                     hasActiveWarnings = true;
-
-                    // Add warning icon and text to the warnings section
                     const warningHTML = `
                         <div class="warning-container">
                             <img src="${warningIcons[warning.code]}" alt="${warning.name}" class="warning-icon">
@@ -229,25 +220,17 @@
                         </div>
                     `;
                     warnsumContainer.innerHTML += warningHTML;
-
-                    // Add warning icon to the title
                     const titleIconHTML = `<img src="${warningIcons[warning.code]}" alt="${warning.name}" class="title-icon">`;
                     titleIconsContainer.innerHTML += titleIconHTML;
                 }
             }
 
-            // Show/hide the warnings section based on active warnings
-            if (hasActiveWarnings) {
-                document.getElementById('warnsumSection').classList.remove('hidden');
-            } else {
-                document.getElementById('warnsumSection').classList.add('hidden');
-            }
+            document.getElementById('warnsumSection').classList.toggle('hidden', !hasActiveWarnings);
         }
 
-        // 更新詳細天氣警告資訊
         function updateWarningInfo(warningInfoData) {
             const warningInfoContainer = document.getElementById('warningInfo');
-            warningInfoContainer.innerHTML = ""; // Clear previous content
+            warningInfoContainer.innerHTML = "";
 
             if (warningInfoData.details && warningInfoData.details.length > 0) {
                 warningInfoData.details.forEach(detail => {
@@ -269,7 +252,6 @@
             }
         }
 
-        // 更新九天天氣預報
         function updateFnd(fndData) {
             const fndContainer = document.getElementById('fnd');
             const fndGeneralSituation = document.getElementById('fndGeneralSituation');
@@ -302,13 +284,99 @@
             }
         }
 
-        // 獲取API數據
+        function isTimePassed(timeStr) {
+            if (!timeStr || timeStr === "--:--") return true;
+            
+            const now = new Date();
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const eventTime = new Date(now);
+            eventTime.setHours(hours, minutes, 0, 0);
+            
+            return now > eventTime;
+        }
+
+        async function updateSunMoonInfo() {
+            try {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const date = String(now.getDate()).padStart(2, '0');
+                
+                // 獲取太陽數據
+                const sunResponse = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=SRS&year=${year}&month=${month}&rformat=json`);
+                const sunData = await sunResponse.json();
+                
+                // 獲取月亮數據
+                const moonResponse = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=MRS&year=${year}&month=${month}&rformat=json`);
+                const moonData = await moonResponse.json();
+
+                // 處理太陽信息
+                if (sunData.data && sunData.data.length > 0) {
+                    const todayIndex = sunData.data.findIndex(item => item[0] === `${year}-${month}-${date}`);
+                    
+                    if (todayIndex !== -1) {
+                        const todaySun = sunData.data[todayIndex];
+                        const tomorrowSun = sunData.data[todayIndex + 1] || ["", "--:--", "--:--", "--:--"];
+                        
+                        if (isTimePassed(todaySun[3])) { // Sunset passed
+                            document.getElementById('sunInfo').innerText = 
+                                `明天 日出︰${tomorrowSun[1]} 日中天︰${tomorrowSun[2]} 日落︰${tomorrowSun[3]}`;
+                        } else if (isTimePassed(todaySun[2])) { // Transit passed
+                            document.getElementById('sunInfo').innerText = 
+                                `日落︰${todaySun[3]} 明天 日出︰${tomorrowSun[1]} 日中天︰${tomorrowSun[2]}`;
+                        } else if (isTimePassed(todaySun[1])) { // Sunrise passed
+                            document.getElementById('sunInfo').innerText = 
+                                `日中天︰${todaySun[2]} 日落︰${todaySun[3]} 明天 日出︰${tomorrowSun[1]}`;
+                        } else {
+                            document.getElementById('sunInfo').innerText = 
+                                `日出︰${todaySun[1]} 日中天︰${todaySun[2]} 日落︰${todaySun[3]}`;
+                        }
+                    } else {
+                        document.getElementById('sunInfo').innerText = "今日太陽數據無效";
+                    }
+                } else {
+                    document.getElementById('sunInfo').innerText = "太陽數據無效";
+                }
+
+                // 處理月亮信息
+                if (moonData.data && moonData.data.length > 0) {
+                    const todayIndex = moonData.data.findIndex(item => item[0] === `${year}-${month}-${date}`);
+                    
+                    if (todayIndex !== -1) {
+                        const todayMoon = moonData.data[todayIndex];
+                        const tomorrowMoon = moonData.data[todayIndex + 1] || ["", "--:--", "--:--", "--:--"];
+                        
+                        if (isTimePassed(todayMoon[3])) { // Moonset passed
+                            document.getElementById('moonInfo').innerText = 
+                                `明天 月出︰${tomorrowMoon[1]} 月中天︰${tomorrowMoon[2]} 月落︰${tomorrowMoon[3]}`;
+                        } else if (isTimePassed(todayMoon[2])) { // Transit passed
+                            document.getElementById('moonInfo').innerText = 
+                                `月落︰${todayMoon[3]} 明天 月出︰${tomorrowMoon[1]} 月中天︰${tomorrowMoon[2]}`;
+                        } else if (isTimePassed(todayMoon[1])) { // Moonrise passed
+                            document.getElementById('moonInfo').innerText = 
+                                `月中天︰${todayMoon[2]} 月落︰${todayMoon[3]} 明天 月出︰${tomorrowMoon[1]}`;
+                        } else {
+                            document.getElementById('moonInfo').innerText = 
+                                `月出︰${todayMoon[1]} 月中天︰${todayMoon[2]} 月落︰${todayMoon[3]}`;
+                        }
+                    } else {
+                        document.getElementById('moonInfo').innerText = "今日月亮數據無效";
+                    }
+                } else {
+                    document.getElementById('moonInfo').innerText = "月亮數據無效";
+                }
+            } catch (error) {
+                console.error('獲取太陽月亮數據時出錯:', error);
+                document.getElementById('sunInfo').innerText = "太陽數據加載失敗";
+                document.getElementById('moonInfo').innerText = "月亮數據加載失敗";
+            }
+        }
+
         async function fetchWeatherData() {
             try {
-                // 更新刷新時間
                 document.getElementById('refreshTime').innerText = getCurrentTime();
 
-                // 特別天氣提示 (swt)
+                // 特別天氣提示
                 const swtResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=swt&lang=tc');
                 const swtData = await swtResponse.json();
                 if (swtData.swt && swtData.swt.length > 0 && swtData.swt[0].desc) {
@@ -319,7 +387,7 @@
                     document.getElementById('swtSection').classList.add('hidden');
                 }
 
-                // 本港地區天氣預報 (flw)
+                // 本港地區天氣預報
                 const flwResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
                 const flwData = await flwResponse.json();
                 document.getElementById('generalSituation').innerText = flwData.generalSituation || "無數據";
@@ -328,7 +396,6 @@
                 document.getElementById('outlook').innerText = flwData.outlook || "無數據";
                 document.getElementById('updateTime').innerText = flwData.updateTime || "無數據";
 
-                // Hide tcInfo and fireDangerWarning if empty
                 if (flwData.tcInfo) {
                     document.getElementById('tcInfo').innerText = flwData.tcInfo;
                     document.getElementById('tcInfoSection').classList.remove('hidden');
@@ -343,10 +410,10 @@
                     document.getElementById('fireDangerWarningSection').classList.add('hidden');
                 }
 
-                // 本港地區天氣報告 (rhrread)
+                // 本港地區天氣報告
                 const rhrreadResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
                 const rhrreadData = await rhrreadResponse.json();
-                if (rhrreadData.temperature && rhrreadData.temperature.data.length > 0) {
+                if (rhrreadData.temperature?.data?.length > 0) {
                     const tsingYiTemp = rhrreadData.temperature.data[12];
                     const humidity = rhrreadData.humidity.data[0];
                     if (tsingYiTemp && humidity) {
@@ -362,20 +429,23 @@
                     document.getElementById('rhrread').innerText = "無數據";
                 }
 
-                // 天氣警告一覽 (warnsum)
+                // 更新太陽和月亮信息
+                await updateSunMoonInfo();
+
+                // 天氣警告一覽
                 const warnsumResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 const warnsumData = await warnsumResponse.json();
-                updateWarnings(warnsumData); // Update warnings section
+                updateWarnings(warnsumData);
 
-                // 詳細天氣警告資訊 (warningInfo)
+                // 詳細天氣警告資訊
                 const warningInfoResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warninginfo&lang=tc');
                 const warningInfoData = await warningInfoResponse.json();
-                updateWarningInfo(warningInfoData); // Update warning details section
+                updateWarningInfo(warningInfoData);
 
-                // 九天天氣預報 (fnd)
+                // 九天天氣預報
                 const fndResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
                 const fndData = await fndResponse.json();
-                updateFnd(fndData); // Update 9-day forecast
+                updateFnd(fndData);
             } catch (error) {
                 console.error('獲取天氣數據時出錯:', error);
                 document.getElementById('generalSituation').innerText = "數據加載失敗";
@@ -390,14 +460,14 @@
                 document.getElementById('warnsum').innerText = "數據加載失敗";
                 document.getElementById('warningInfo').innerText = "數據加載失敗";
                 document.getElementById('swt').innerText = "數據加載失敗";
+                document.getElementById('sunInfo').innerText = "太陽數據加載失敗";
+                document.getElementById('moonInfo').innerText = "月亮數據加載失敗";
             }
         }
 
-        // 每分鐘更新數據
-        fetchWeatherData(); // 立即加載
-        setInterval(fetchWeatherData, 60000); // 每分鐘更新一次
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 60000);
 
-        // 切換 詳細天氣警告資訊 的顯示狀態
         function toggleWarningInfo() {
             const warningInfoSection = document.getElementById('warningInfoSection');
             warningInfoSection.classList.toggle('hidden');
