@@ -284,87 +284,120 @@
             }
         }
 
-        function isTimePassed(timeStr) {
-            if (!timeStr || timeStr === "--:--") return true;
-            
-            const now = new Date();
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            const eventTime = new Date(now);
-            eventTime.setHours(hours, minutes, 0, 0);
-            
-            return now > eventTime;
+        async function getAstroData(dataType, year, month) {
+            const response = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=${dataType}&year=${year}&month=${month}&rformat=json`);
+            return await response.json();
         }
 
         async function updateSunMoonInfo() {
             try {
                 const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const date = String(now.getDate()).padStart(2, '0');
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth() + 1;
+                const currentDay = now.getDate();
                 
-                // 獲取太陽數據
-                const sunResponse = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=SRS&year=${year}&month=${month}&rformat=json`);
-                const sunData = await sunResponse.json();
+                // Get tomorrow's date
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowYear = tomorrow.getFullYear();
+                const tomorrowMonth = tomorrow.getMonth() + 1;
+                const tomorrowDay = tomorrow.getDate();
                 
-                // 獲取月亮數據
-                const moonResponse = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/opendata.php?dataType=MRS&year=${year}&month=${month}&rformat=json`);
-                const moonData = await moonResponse.json();
-
-                // 處理太陽信息
-                if (sunData.data && sunData.data.length > 0) {
-                    const todayIndex = sunData.data.findIndex(item => item[0] === `${year}-${month}-${date}`);
-                    
-                    if (todayIndex !== -1) {
-                        const todaySun = sunData.data[todayIndex];
-                        const tomorrowSun = sunData.data[todayIndex + 1] || ["", "--:--", "--:--", "--:--"];
-                        
-                        if (isTimePassed(todaySun[3])) { // Sunset passed
-                            document.getElementById('sunInfo').innerText = 
-                                `明天 日出︰${tomorrowSun[1]} 日中天︰${tomorrowSun[2]} 日落︰${tomorrowSun[3]}`;
-                        } else if (isTimePassed(todaySun[2])) { // Transit passed
-                            document.getElementById('sunInfo').innerText = 
-                                `日落︰${todaySun[3]} 明天 日出︰${tomorrowSun[1]} 日中天︰${tomorrowSun[2]}`;
-                        } else if (isTimePassed(todaySun[1])) { // Sunrise passed
-                            document.getElementById('sunInfo').innerText = 
-                                `日中天︰${todaySun[2]} 日落︰${todaySun[3]} 明天 日出︰${tomorrowSun[1]}`;
-                        } else {
-                            document.getElementById('sunInfo').innerText = 
-                                `日出︰${todaySun[1]} 日中天︰${todaySun[2]} 日落︰${todaySun[3]}`;
-                        }
-                    } else {
-                        document.getElementById('sunInfo').innerText = "今日太陽數據無效";
-                    }
-                } else {
-                    document.getElementById('sunInfo').innerText = "太陽數據無效";
+                // Format dates for comparison
+                const todayDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+                const tomorrowDateStr = `${tomorrowYear}-${String(tomorrowMonth).padStart(2, '0')}-${String(tomorrowDay).padStart(2, '0')}`;
+                
+                // Get sun data for current month
+                const sunDataCurrent = await getAstroData('SRS', currentYear, currentMonth);
+                
+                // Get moon data for current month
+                const moonDataCurrent = await getAstroData('MRS', currentYear, currentMonth);
+                
+                // If tomorrow is in next month, get next month's data too
+                let sunDataNext, moonDataNext;
+                if (currentMonth !== tomorrowMonth) {
+                    sunDataNext = await getAstroData('SRS', tomorrowYear, tomorrowMonth);
+                    moonDataNext = await getAstroData('MRS', tomorrowYear, tomorrowMonth);
                 }
+                
+                // Combine current and next month's data if needed
+                const sunData = {
+                    data: sunDataCurrent.data.concat(sunDataNext ? sunDataNext.data : [])
+                };
+                const moonData = {
+                    data: moonDataCurrent.data.concat(moonDataNext ? moonDataNext.data : [])
+                };
 
-                // 處理月亮信息
-                if (moonData.data && moonData.data.length > 0) {
-                    const todayIndex = moonData.data.findIndex(item => item[0] === `${year}-${month}-${date}`);
-                    
-                    if (todayIndex !== -1) {
-                        const todayMoon = moonData.data[todayIndex];
-                        const tomorrowMoon = moonData.data[todayIndex + 1] || ["", "--:--", "--:--", "--:--"];
-                        
-                        if (isTimePassed(todayMoon[3])) { // Moonset passed
-                            document.getElementById('moonInfo').innerText = 
-                                `明天 月出︰${tomorrowMoon[1]} 月中天︰${tomorrowMoon[2]} 月落︰${tomorrowMoon[3]}`;
-                        } else if (isTimePassed(todayMoon[2])) { // Transit passed
-                            document.getElementById('moonInfo').innerText = 
-                                `月落︰${todayMoon[3]} 明天 月出︰${tomorrowMoon[1]} 月中天︰${tomorrowMoon[2]}`;
-                        } else if (isTimePassed(todayMoon[1])) { // Moonrise passed
-                            document.getElementById('moonInfo').innerText = 
-                                `月中天︰${todayMoon[2]} 月落︰${todayMoon[3]} 明天 月出︰${tomorrowMoon[1]}`;
-                        } else {
-                            document.getElementById('moonInfo').innerText = 
-                                `月出︰${todayMoon[1]} 月中天︰${todayMoon[2]} 月落︰${todayMoon[3]}`;
-                        }
-                    } else {
-                        document.getElementById('moonInfo').innerText = "今日月亮數據無效";
+                // Helper function to process astronomical data
+                const processAstroData = (data, type) => {
+                    if (!data || !data.data || data.data.length === 0) {
+                        return `${type}數據無效`;
                     }
-                } else {
-                    document.getElementById('moonInfo').innerText = "月亮數據無效";
-                }
+
+                    // Find today's data
+                    const todayData = data.data.find(item => {
+                        // Handle both possible date formats: "YYYY-MM-DD" and "YYYYMMDD"
+                        const itemDate = item[0].includes('-') ? item[0] : 
+                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        return itemDate === todayDateStr;
+                    });
+
+                    if (!todayData) {
+                        return `今日${type}數據無效`;
+                    }
+
+                    // Find tomorrow's data
+                    const tomorrowData = data.data.find(item => {
+                        const itemDate = item[0].includes('-') ? item[0] : 
+                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        return itemDate === tomorrowDateStr;
+                    });
+
+                    // Extract times (array positions: 1=rise, 2=transit, 3=set)
+                    const getTime = (data, index) => {
+                        return data && data[index] && data[index] !== "--:--" ? data[index] : null;
+                    };
+
+                    const rise = getTime(todayData, 1);
+                    const transit = getTime(todayData, 2);
+                    const set = getTime(todayData, 3);
+                    const nextRise = getTime(tomorrowData, 1);
+                    const nextTransit = getTime(tomorrowData, 2);
+                    const nextSet = getTime(tomorrowData, 3);
+
+                    // Current time in minutes for comparison
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    
+                    // Convert time string to minutes
+                    const timeToMinutes = (timeStr) => {
+                        if (!timeStr) return Infinity;
+                        const [hours, minutes] = timeStr.split(':').map(Number);
+                        return hours * 60 + minutes;
+                    };
+
+                    // Determine which times to show based on current time
+                    if (set && currentMinutes >= timeToMinutes(set)) {
+                        // After sunset/moonset - show next day's times
+                        return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
+                    } 
+                    else if (transit && currentMinutes >= timeToMinutes(transit)) {
+                        // After transit - show set and next day's rise/transit
+                        return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
+                    } 
+                    else if (rise && currentMinutes >= timeToMinutes(rise)) {
+                        // After sunrise/moonrise - show transit and set
+                        return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
+                    } 
+                    else {
+                        // Before sunrise/moonrise - show today's times
+                        return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
+                    }
+                };
+
+                // Update displays
+                document.getElementById('sunInfo').innerText = processAstroData(sunData, "日");
+                document.getElementById('moonInfo').innerText = processAstroData(moonData, "月");
+
             } catch (error) {
                 console.error('獲取太陽月亮數據時出錯:', error);
                 document.getElementById('sunInfo').innerText = "太陽數據加載失敗";
@@ -471,6 +504,9 @@
         function toggleWarningInfo() {
             const warningInfoSection = document.getElementById('warningInfoSection');
             warningInfoSection.classList.toggle('hidden');
+            const button = document.getElementById('toggleWarningButton');
+            button.textContent = warningInfoSection.classList.contains('hidden') ? 
+                "顯示詳細天氣警告資訊" : "隱藏詳細天氣警告資訊";
         }
     </script>
 </body>
