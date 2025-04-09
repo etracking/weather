@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,8 +12,7 @@
             padding: 20px;
         }
 
-        h1,
-        h2 {
+        h1, h2 {
             color: #0066cc;
         }
 
@@ -48,26 +46,58 @@
 
         .forecast-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .forecast-day {
             text-align: center;
+            padding: 12px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #1b5397;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
         }
 
-        .forecast-day img {
-            width: 50px;
-            height: 50px;
+        .forecast-day div {
+            line-height: 1.5;
+            margin: 5px 0;
+            font-size: 1em;
+        }
+
+        .forecast-day strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: white;
+            font-weight: 600;
+        }
+
+        .forecast-weather {
+            min-height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+        }
+
+        .forecast-details {
+            margin-top: 8px;
+        }
+
+        .forecast-details div {
+            margin: 5px 0;
+            font-size: 1em;
         }
 
         .hidden {
             display: none;
-        }
-
-        .forecast-day div {
-            line-height: 1.4;
-            margin-bottom: 3px;
         }
 
         .warning-icon {
@@ -107,12 +137,6 @@
             gap: 20px;
         }
 
-        @media (max-width: 768px) {
-            .weather-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
         .toggle-button {
             background-color: #0066cc;
             color: white;
@@ -128,7 +152,6 @@
         }
     </style>
 </head>
-
 <body>
     <h1>香港天氣預報 <span id="titleIcons"></span></h1>
 
@@ -286,22 +309,25 @@
                 fndData.weatherForecast.forEach(day => {
                     const formattedDate = formatDate(day.forecastDate);
                     const temperatureRange = `${day.forecastMintemp.value}°C-${day.forecastMaxtemp.value}°C`;
-                    // Add humidity range if available
                     const humidityRange = day.forecastMinrh && day.forecastMaxrh ?
                         `${day.forecastMinrh.value}%-${day.forecastMaxrh.value}%` : "";
 
                     forecastHTML += `
-                <div class="forecast-day">
-                    <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
-                    <div>
-                        <strong>${formattedDate}</strong><br>
-                        ${day.forecastWeather || "無數據"}<br>
-                        ${temperatureRange}<br>
-                        ${humidityRange}<br>
-                        ${day.forecastWind || "無數據"}
-                    </div>
-                </div>
-            `;
+                        <div class="forecast-day">
+                            <div>
+                                <strong>${formattedDate}</strong>
+                                <div class="forecast-weather">
+                                    <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
+                                    <div>${day.forecastWeather || "無數據"}</div>
+                                </div>
+                            </div>
+                            <div class="forecast-details">
+                                <div>🌡️ ${temperatureRange}</div>
+                                <div>💧 ${humidityRange}</div>
+                                <div>🌬️ ${day.forecastWind || "無數據"}</div>
+                            </div>
+                        </div>
+                    `;
                 });
                 fndContainer.innerHTML = forecastHTML;
                 fndGeneralSituation.innerText = fndData.generalSituation || "無數據";
@@ -324,32 +350,25 @@
                 const currentYear = now.getFullYear();
                 const currentMonth = now.getMonth() + 1;
                 const currentDay = now.getDate();
-
-                // Get tomorrow's date
+                
                 const tomorrow = new Date(now);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const tomorrowYear = tomorrow.getFullYear();
                 const tomorrowMonth = tomorrow.getMonth() + 1;
                 const tomorrowDay = tomorrow.getDate();
-
-                // Format dates for comparison
+                
                 const todayDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
                 const tomorrowDateStr = `${tomorrowYear}-${String(tomorrowMonth).padStart(2, '0')}-${String(tomorrowDay).padStart(2, '0')}`;
-
-                // Get sun data for current month
+                
                 const sunDataCurrent = await getAstroData('SRS', currentYear, currentMonth);
-
-                // Get moon data for current month
                 const moonDataCurrent = await getAstroData('MRS', currentYear, currentMonth);
-
-                // If tomorrow is in next month, get next month's data too
+                
                 let sunDataNext, moonDataNext;
                 if (currentMonth !== tomorrowMonth) {
                     sunDataNext = await getAstroData('SRS', tomorrowYear, tomorrowMonth);
                     moonDataNext = await getAstroData('MRS', tomorrowYear, tomorrowMonth);
                 }
-
-                // Combine current and next month's data if needed
+                
                 const sunData = {
                     data: sunDataCurrent.data.concat(sunDataNext ? sunDataNext.data : [])
                 };
@@ -357,17 +376,14 @@
                     data: moonDataCurrent.data.concat(moonDataNext ? moonDataNext.data : [])
                 };
 
-                // Helper function to process astronomical data
                 const processAstroData = (data, type) => {
                     if (!data || !data.data || data.data.length === 0) {
                         return `${type}數據無效`;
                     }
 
-                    // Find today's data
                     const todayData = data.data.find(item => {
-                        // Handle both possible date formats: "YYYY-MM-DD" and "YYYYMMDD"
-                        const itemDate = item[0].includes('-') ? item[0] :
-                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        const itemDate = item[0].includes('-') ? item[0] : 
+                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === todayDateStr;
                     });
 
@@ -375,14 +391,12 @@
                         return `今日${type}數據無效`;
                     }
 
-                    // Find tomorrow's data
                     const tomorrowData = data.data.find(item => {
-                        const itemDate = item[0].includes('-') ? item[0] :
-                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        const itemDate = item[0].includes('-') ? item[0] : 
+                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === tomorrowDateStr;
                     });
 
-                    // Extract times (array positions: 1=rise, 2=transit, 3=set)
                     const getTime = (data, index) => {
                         return data && data[index] && data[index] !== "--:--" ? data[index] : null;
                     };
@@ -394,36 +408,28 @@
                     const nextTransit = getTime(tomorrowData, 2);
                     const nextSet = getTime(tomorrowData, 3);
 
-                    // Current time in minutes for comparison
                     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-                    // Convert time string to minutes
+                    
                     const timeToMinutes = (timeStr) => {
                         if (!timeStr) return Infinity;
                         const [hours, minutes] = timeStr.split(':').map(Number);
                         return hours * 60 + minutes;
                     };
 
-                    // Determine which times to show based on current time
                     if (set && currentMinutes >= timeToMinutes(set)) {
-                        // After sunset/moonset - show next day's times
                         return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
-                    }
+                    } 
                     else if (transit && currentMinutes >= timeToMinutes(transit)) {
-                        // After transit - show set and next day's rise/transit
                         return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
-                    }
+                    } 
                     else if (rise && currentMinutes >= timeToMinutes(rise)) {
-                        // After sunrise/moonrise - show transit and set
                         return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
-                    }
+                    } 
                     else {
-                        // Before sunrise/moonrise - show today's times
                         return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
                     }
                 };
 
-                // Update displays
                 document.getElementById('sunInfo').innerText = processAstroData(sunData, "日");
                 document.getElementById('moonInfo').innerText = processAstroData(moonData, "月");
 
@@ -438,7 +444,6 @@
             try {
                 document.getElementById('refreshTime').innerText = getCurrentTime();
 
-                // 特別天氣提示
                 const swtResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=swt&lang=tc');
                 const swtData = await swtResponse.json();
                 if (swtData.swt && swtData.swt.length > 0 && swtData.swt[0].desc) {
@@ -449,7 +454,6 @@
                     document.getElementById('swtSection').classList.add('hidden');
                 }
 
-                // 本港地區天氣預報
                 const flwResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
                 const flwData = await flwResponse.json();
                 document.getElementById('generalSituation').innerText = flwData.generalSituation || "無數據";
@@ -472,7 +476,6 @@
                     document.getElementById('fireDangerWarningSection').classList.add('hidden');
                 }
 
-                // 本港地區天氣報告
                 const rhrreadResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
                 const rhrreadData = await rhrreadResponse.json();
                 if (rhrreadData.temperature?.data?.length > 0) {
@@ -491,20 +494,16 @@
                     document.getElementById('rhrread').innerText = "無數據";
                 }
 
-                // 更新太陽和月亮信息
                 await updateSunMoonInfo();
 
-                // 天氣警告一覽
                 const warnsumResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 const warnsumData = await warnsumResponse.json();
                 updateWarnings(warnsumData);
 
-                // 詳細天氣警告資訊
                 const warningInfoResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warninginfo&lang=tc');
                 const warningInfoData = await warningInfoResponse.json();
                 updateWarningInfo(warningInfoData);
 
-                // 九天天氣預報
                 const fndResponse = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
                 const fndData = await fndResponse.json();
                 updateFnd(fndData);
@@ -534,10 +533,9 @@
             const warningInfoSection = document.getElementById('warningInfoSection');
             warningInfoSection.classList.toggle('hidden');
             const button = document.getElementById('toggleWarningButton');
-            button.textContent = warningInfoSection.classList.contains('hidden') ?
+            button.textContent = warningInfoSection.classList.contains('hidden') ? 
                 "顯示詳細天氣警告資訊" : "隱藏詳細天氣警告資訊";
         }
     </script>
 </body>
-
 </html>
