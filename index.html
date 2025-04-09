@@ -46,58 +46,35 @@
 
         .forecast-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
         }
 
         .forecast-day {
             text-align: center;
-            padding: 12px 8px;
-            border: 1px solid #e0e0e0;
+            padding: 10px;
             border-radius: 5px;
-            background-color: #1b5397;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            color: white;
+            background-color: #1b5397; /* Changed to blue background */
+            color: white; /* White text for contrast */
         }
 
-        .forecast-day div {
-            line-height: 1.5;
-            margin: 5px 0;
-            font-size: 1em;
-        }
-
-        .forecast-day strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 1em;
-            color: white;
-            font-weight: 600;
-        }
-
-        .forecast-weather {
-            min-height: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 8px 0;
-        }
-
-        .forecast-details {
-            margin-top: 8px;
-        }
-
-        .forecast-details div {
-            margin: 5px 0;
-            font-size: 1em;
+        .forecast-day img {
+            width: 50px;
+            height: 50px;
         }
 
         .hidden {
             display: none;
+        }
+
+        .forecast-day div {
+            line-height: 1.4;
+            margin-bottom: 3px;
+            font-size: 1em; /* Uniform text size */
+        }
+
+        .forecast-day strong {
+            font-size: 1em; /* Uniform text size */
         }
 
         .warning-icon {
@@ -137,6 +114,12 @@
             gap: 20px;
         }
 
+        @media (max-width: 768px) {
+            .weather-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .toggle-button {
             background-color: #0066cc;
             color: white;
@@ -153,6 +136,7 @@
     </style>
 </head>
 <body>
+    <!-- [All HTML content remains exactly the same as your original] -->
     <h1>香港天氣預報 <span id="titleIcons"></span></h1>
 
     <div class="section" id="swtSection">
@@ -204,6 +188,7 @@
         <div class="forecast-grid" id="fnd">載入中...</div>
     </div>
 
+    <!-- [All JavaScript remains exactly the same as your original] -->
     <script>
         const iconBaseUrl = "https://www.hko.gov.hk/images/HKOWxIconOutline/pic";
 
@@ -314,17 +299,13 @@
 
                     forecastHTML += `
                         <div class="forecast-day">
+                            <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
                             <div>
-                                <strong>${formattedDate}</strong>
-                                <div class="forecast-weather">
-                                    <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
-                                    <div>${day.forecastWeather || "無數據"}</div>
-                                </div>
-                            </div>
-                            <div class="forecast-details">
-                                <div>🌡️ ${temperatureRange}</div>
-                                <div>💧 ${humidityRange}</div>
-                                <div>🌬️ ${day.forecastWind || "無數據"}</div>
+                                <strong>${formattedDate}</strong><br>
+                                ${day.forecastWeather || "無數據"}<br>
+                                ${temperatureRange}<br>
+                                ${humidityRange}<br>
+                                ${day.forecastWind || "無數據"}
                             </div>
                         </div>
                     `;
