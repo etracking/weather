@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,8 +13,9 @@
             padding: 20px;
         }
 
-        h1, h2 {
-            color: #0066cc;
+        h1,
+        h2 {
+            color: #555;            /* Changed from #0066cc to dark gray */
         }
 
         .section {
@@ -22,6 +24,7 @@
             margin-bottom: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #e0e0e0;            /* Added light gray accent border */
         }
 
         .icon {
@@ -54,8 +57,9 @@
             text-align: center;
             padding: 10px;
             border-radius: 5px;
-            background-color: #1b5397; /* Changed to blue background */
-            color: white; /* White text for contrast */
+            background-color: #f5f5f5;            /* Changed from blue to light gray */
+            color: #333;            /* Changed from white to dark text */
+            border: 1px solid #e0e0e0;            /* Added subtle border */
         }
 
         .forecast-day img {
@@ -70,11 +74,13 @@
         .forecast-day div {
             line-height: 1.4;
             margin-bottom: 3px;
-            font-size: 1em; /* Uniform text size */
+            font-size: 1em;
+            /* Uniform text size */
         }
 
         .forecast-day strong {
-            font-size: 1em; /* Uniform text size */
+            font-size: 1em;
+            /* Uniform text size */
         }
 
         .warning-icon {
@@ -121,7 +127,7 @@
         }
 
         .toggle-button {
-            background-color: #0066cc;
+            background-color: #777;            /* Changed from blue to medium gray */
             color: white;
             padding: 10px 15px;
             border: none;
@@ -131,10 +137,11 @@
         }
 
         .toggle-button:hover {
-            background-color: #005bb5;
+            background-color: #666;            /* Darker gray on hover */
         }
     </style>
 </head>
+
 <body>
     <!-- [All HTML content remains exactly the same as your original] -->
     <h1>香港天氣預報 <span id="titleIcons"></span></h1>
@@ -331,25 +338,25 @@
                 const currentYear = now.getFullYear();
                 const currentMonth = now.getMonth() + 1;
                 const currentDay = now.getDate();
-                
+
                 const tomorrow = new Date(now);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const tomorrowYear = tomorrow.getFullYear();
                 const tomorrowMonth = tomorrow.getMonth() + 1;
                 const tomorrowDay = tomorrow.getDate();
-                
+
                 const todayDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
                 const tomorrowDateStr = `${tomorrowYear}-${String(tomorrowMonth).padStart(2, '0')}-${String(tomorrowDay).padStart(2, '0')}`;
-                
+
                 const sunDataCurrent = await getAstroData('SRS', currentYear, currentMonth);
                 const moonDataCurrent = await getAstroData('MRS', currentYear, currentMonth);
-                
+
                 let sunDataNext, moonDataNext;
                 if (currentMonth !== tomorrowMonth) {
                     sunDataNext = await getAstroData('SRS', tomorrowYear, tomorrowMonth);
                     moonDataNext = await getAstroData('MRS', tomorrowYear, tomorrowMonth);
                 }
-                
+
                 const sunData = {
                     data: sunDataCurrent.data.concat(sunDataNext ? sunDataNext.data : [])
                 };
@@ -363,8 +370,8 @@
                     }
 
                     const todayData = data.data.find(item => {
-                        const itemDate = item[0].includes('-') ? item[0] : 
-                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        const itemDate = item[0].includes('-') ? item[0] :
+                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === todayDateStr;
                     });
 
@@ -373,8 +380,8 @@
                     }
 
                     const tomorrowData = data.data.find(item => {
-                        const itemDate = item[0].includes('-') ? item[0] : 
-                                       `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        const itemDate = item[0].includes('-') ? item[0] :
+                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === tomorrowDateStr;
                     });
 
@@ -390,7 +397,7 @@
                     const nextSet = getTime(tomorrowData, 3);
 
                     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                    
+
                     const timeToMinutes = (timeStr) => {
                         if (!timeStr) return Infinity;
                         const [hours, minutes] = timeStr.split(':').map(Number);
@@ -399,13 +406,13 @@
 
                     if (set && currentMinutes >= timeToMinutes(set)) {
                         return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
-                    } 
+                    }
                     else if (transit && currentMinutes >= timeToMinutes(transit)) {
                         return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
-                    } 
+                    }
                     else if (rise && currentMinutes >= timeToMinutes(rise)) {
                         return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
-                    } 
+                    }
                     else {
                         return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
                     }
@@ -514,9 +521,10 @@
             const warningInfoSection = document.getElementById('warningInfoSection');
             warningInfoSection.classList.toggle('hidden');
             const button = document.getElementById('toggleWarningButton');
-            button.textContent = warningInfoSection.classList.contains('hidden') ? 
+            button.textContent = warningInfoSection.classList.contains('hidden') ?
                 "顯示詳細天氣警告資訊" : "隱藏詳細天氣警告資訊";
         }
     </script>
 </body>
+
 </html>
