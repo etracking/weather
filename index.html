@@ -405,25 +405,45 @@
                     const nextTransit = getTime(tomorrowData, 2);
                     const nextSet = getTime(tomorrowData, 3);
 
-                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    if (type === "月") {
+                        let result = [];
 
-                    const timeToMinutes = (timeStr) => {
-                        if (!timeStr) return Infinity;
-                        const [hours, minutes] = timeStr.split(':').map(Number);
-                        return hours * 60 + minutes;
-                    };
+                        if (rise) {
+                            result.push(`${type}出︰${rise}`);
+                        }
 
-                    if (set && currentMinutes >= timeToMinutes(set)) {
-                        return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
-                    }
-                    else if (transit && currentMinutes >= timeToMinutes(transit)) {
-                        return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
-                    }
-                    else if (rise && currentMinutes >= timeToMinutes(rise)) {
-                        return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
-                    }
-                    else {
-                        return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
+                        if (transit && transit !== "--:--") {
+                            result.push(`${type}中天︰${transit}`);
+                        }
+
+                        if (nextSet) {
+                            result.push(`明天 ${type}落︰${nextSet}`);
+                        } else if (set) {
+                            result.push(`${type}落︰${set}`);
+                        }
+
+                        return result.join(" ") || "無數據";
+                    } else {
+                        // Original sun logic remains unchanged
+                        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                        const timeToMinutes = (timeStr) => {
+                            if (!timeStr) return Infinity;
+                            const [hours, minutes] = timeStr.split(':').map(Number);
+                            return hours * 60 + minutes;
+                        };
+
+                        if (set && currentMinutes >= timeToMinutes(set)) {
+                            return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
+                        }
+                        else if (transit && currentMinutes >= timeToMinutes(transit)) {
+                            return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
+                        }
+                        else if (rise && currentMinutes >= timeToMinutes(rise)) {
+                            return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
+                        }
+                        else {
+                            return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
+                        }
                     }
                 };
 
