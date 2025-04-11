@@ -312,24 +312,26 @@
                         `${day.forecastMinrh.value}%-${day.forecastMaxrh.value}%` : "";
 
                     forecastHTML += `
-                        <div class="forecast-day">
-                            <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
-                            <div>
-                                <strong>${formattedDate}</strong><br>
-                                ${day.forecastWeather || "無數據"}<br>
-                                ${temperatureRange}<br>
-                                ${humidityRange}<br>
-                                ${day.forecastWind || "無數據"}
-                            </div>
-                        </div>
-                    `;
+                <div class="forecast-day">
+                    <div>
+                        <strong>${formattedDate}</strong><br>
+                        ${temperatureRange}<br>
+                        ${humidityRange}
+                    </div>
+                    <img src="${iconBaseUrl}${day.ForecastIcon}.png" alt="${day.forecastWeather}" class="icon">
+                    <div>
+                        ${day.forecastWeather || "無數據"}<br>
+                        ${day.forecastWind || "無數據"}
+                    </div>
+                </div>
+            `;
                 });
                 fndContainer.innerHTML = forecastHTML;
                 fndGeneralSituation.innerText = fndData.generalSituation || "無數據";
-                fndUpdateTime.innerText = fndData.updateTime ? fndData.updateTime.replace("T", " ").substring(0, 16) : "無數據";
+                fndUpdateTime.innerText = fndData.updateTime ? fndData.updateTime.replace("T", " ").replace(/\+.*$/, "") : "無數據";
             } else {
                 fndContainer.innerText = "無數據";
-                fndGeneralSituation.innerText = "無數據";
+                fndGeneralSituation.innerText = "無データ";
                 fndUpdateTime.innerText = "無數據";
             }
         }
