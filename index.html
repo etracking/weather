@@ -357,38 +357,97 @@
                 const todayDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
                 const tomorrowDateStr = `${tomorrowYear}-${String(tomorrowMonth).padStart(2, '0')}-${String(tomorrowDay).padStart(2, '0')}`;
 
-                const sunDataCurrent = await getAstroData('SRS', currentYear, currentMonth);
+                // Get moon data
                 const moonDataCurrent = await getAstroData('MRS', currentYear, currentMonth);
-
-                let sunDataNext, moonDataNext;
+                let moonDataNext;
                 if (currentMonth !== tomorrowMonth) {
-                    sunDataNext = await getAstroData('SRS', tomorrowYear, tomorrowMonth);
                     moonDataNext = await getAstroData('MRS', tomorrowYear, tomorrowMonth);
                 }
-
-                const sunData = {
-                    data: sunDataCurrent.data.concat(sunDataNext ? sunDataNext.data : [])
-                };
                 const moonData = {
                     data: moonDataCurrent.data.concat(moonDataNext ? moonDataNext.data : [])
                 };
 
-                const processAstroData = (data, type) => {
-                    if (!data || !data.data || data.data.length === 0) {
-                        return `${type}數據無效`;
+                // Process moon data
+                const processMoonData = () => {
+                    if (!moonData || !moonData.data || moonData.data.length === 0) {
+                        return "月亮數據無效";
                     }
 
-                    const todayData = data.data.find(item => {
+                    const todayData = moonData.data.find(item => {
                         const itemDate = item[0].includes('-') ? item[0] :
                             `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === todayDateStr;
                     });
 
                     if (!todayData) {
-                        return `今日${type}數據無效`;
+                        return "今日月亮數據無效";
                     }
 
-                    const tomorrowData = data.data.find(item => {
+                    const tomorrowData = moonData.data.find(item => {
+                        const itemDate = item[0].includes('-') ? item[0] :
+                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        return itemDate === tomorrowDateStr;
+                    });
+
+                    const getTime = (data, index) => {
+                        return data && data[index] && data[index] !== "--:--" ? data[index] : null;
+                    };
+
+                    const rise = getTime(todayData, 1); // Today's moonrise
+                    const nextTransit = tomorrowData ? getTime(tomorrowData, 2) : null; // Tomorrow's transit
+                    const nextSet = tomorrowData ? getTime(tomorrowData, 3) : null; // Tomorrow's moonset
+
+                    let result = [];
+
+                    // Always show today's moonrise
+                    if (rise) {
+                        result.push(`月出︰${rise}`);
+                    }
+
+                    // Handle transit and moonset
+                    if (nextTransit && nextSet) {
+                        // If both are tomorrow, show "明天" only once
+                        result.push(`明天 月中天︰${nextTransit} 月落︰${nextSet}`);
+                    } else {
+                        // Otherwise show them separately
+                        if (nextTransit) {
+                            result.push(`明天 月中天︰${nextTransit}`);
+                        }
+                        if (nextSet) {
+                            result.push(`明天 月落︰${nextSet}`);
+                        }
+                    }
+
+                    return result.join(" ") || "無數據";
+                };
+
+                // Get sun data
+                const sunDataCurrent = await getAstroData('SRS', currentYear, currentMonth);
+                let sunDataNext;
+                if (currentMonth !== tomorrowMonth) {
+                    sunDataNext = await getAstroData('SRS', tomorrowYear, tomorrowMonth);
+                }
+                const sunData = {
+                    data: sunDataCurrent.data.concat(sunDataNext ? sunDataNext.data : [])
+                };
+
+                // Process sun data (unchanged from original)
+                const processSunData = () => {
+                    if (!sunData || !sunData.data || sunData.data.length === 0) {
+                        return "太陽數據無效";
+                    }
+
+                    const todayData = sunData.data.find(item => {
+                        const itemDate = item[0].includes('-') ? item[0] :
+                            `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
+                        return itemDate === todayDateStr;
+                    });
+
+                    if (!todayData) {
+                        return "今日太陽數據無效";
+                    }
+
+                    const tomorrowData = sunData.data.find(item => {
                         const itemDate = item[0].includes('-') ? item[0] :
                             `${item[0].substring(0, 4)}-${item[0].substring(4, 6)}-${item[0].substring(6, 8)}`;
                         return itemDate === tomorrowDateStr;
@@ -401,54 +460,34 @@
                     const rise = getTime(todayData, 1);
                     const transit = getTime(todayData, 2);
                     const set = getTime(todayData, 3);
-                    const nextRise = getTime(tomorrowData, 1);
-                    const nextTransit = getTime(tomorrowData, 2);
-                    const nextSet = getTime(tomorrowData, 3);
+                    const nextRise = tomorrowData ? getTime(tomorrowData, 1) : null;
+                    const nextTransit = tomorrowData ? getTime(tomorrowData, 2) : null;
+                    const nextSet = tomorrowData ? getTime(tomorrowData, 3) : null;
 
-                    if (type === "月") {
-                        let result = [];
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    const timeToMinutes = (timeStr) => {
+                        if (!timeStr) return Infinity;
+                        const [hours, minutes] = timeStr.split(':').map(Number);
+                        return hours * 60 + minutes;
+                    };
 
-                        if (rise) {
-                            result.push(`${type}出︰${rise}`);
-                        }
-
-                        if (transit && transit !== "--:--") {
-                            result.push(`${type}中天︰${transit}`);
-                        }
-
-                        if (nextSet) {
-                            result.push(`明天 ${type}落︰${nextSet}`);
-                        } else if (set) {
-                            result.push(`${type}落︰${set}`);
-                        }
-
-                        return result.join(" ") || "無數據";
-                    } else {
-                        // Original sun logic remains unchanged
-                        const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                        const timeToMinutes = (timeStr) => {
-                            if (!timeStr) return Infinity;
-                            const [hours, minutes] = timeStr.split(':').map(Number);
-                            return hours * 60 + minutes;
-                        };
-
-                        if (set && currentMinutes >= timeToMinutes(set)) {
-                            return `明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"} ${type}落︰${nextSet || "--:--"}`;
-                        }
-                        else if (transit && currentMinutes >= timeToMinutes(transit)) {
-                            return `${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"} ${type}中天︰${nextTransit || "--:--"}`;
-                        }
-                        else if (rise && currentMinutes >= timeToMinutes(rise)) {
-                            return `${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"} 明天 ${type}出︰${nextRise || "--:--"}`;
-                        }
-                        else {
-                            return `${type}出︰${rise || "--:--"} ${type}中天︰${transit || "--:--"} ${type}落︰${set || "--:--"}`;
-                        }
+                    if (set && currentMinutes >= timeToMinutes(set)) {
+                        return `明天 日出︰${nextRise || "--:--"} 日中天︰${nextTransit || "--:--"} 日落︰${nextSet || "--:--"}`;
+                    }
+                    else if (transit && currentMinutes >= timeToMinutes(transit)) {
+                        return `日落︰${set || "--:--"} 明天 日出︰${nextRise || "--:--"} 日中天︰${nextTransit || "--:--"}`;
+                    }
+                    else if (rise && currentMinutes >= timeToMinutes(rise)) {
+                        return `日中天︰${transit || "--:--"} 日落︰${set || "--:--"} 明天 日出︰${nextRise || "--:--"}`;
+                    }
+                    else {
+                        return `日出︰${rise || "--:--"} 日中天︰${transit || "--:--"} 日落︰${set || "--:--"}`;
                     }
                 };
 
-                document.getElementById('sunInfo').innerText = processAstroData(sunData, "日");
-                document.getElementById('moonInfo').innerText = processAstroData(moonData, "月");
+                // Update the DOM
+                document.getElementById('sunInfo').innerText = processSunData();
+                document.getElementById('moonInfo').innerText = processMoonData();
 
             } catch (error) {
                 console.error('獲取太陽月亮數據時出錯:', error);
